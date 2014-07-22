@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/codegangsta/cli"
+	"github.com/wsxiaoys/terminal/color"
 	"net/http"
 	"net/url"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -86,7 +88,6 @@ func doGet(c *cli.Context) {
 	if len(queryValues) != 0 {
 		baseUrl.RawQuery = queryValues.Encode()
 	}
-	fmt.Println(baseUrl.String())
 	req, reqErr := http.NewRequest("GET", baseUrl.String(), nil)
 	if reqErr != nil {
 		fmt.Println(reqErr)
@@ -102,6 +103,18 @@ func doGet(c *cli.Context) {
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(resp.Body)
-	fmt.Println(resp.Status)
+	color.Printf("@{m}%s @{y}%s\n", resp.Proto, resp.Status)
+	sortedHeader := make([]string, len(resp.Header))
+	i := 0
+	for key, _ := range resp.Header {
+		sortedHeader[i] = key
+		i++
+	}
+	sort.Strings(sortedHeader)
+	for _, key := range sortedHeader {
+		if key != "Set-Cookie" && key != "P3p" {
+			color.Printf("%s: @{c}%s\n", key, resp.Header[key][0])
+		}
+	}
 	//fmt.Println(buf.String())
 }
